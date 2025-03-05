@@ -2,6 +2,9 @@
 version: '3.7'
 
 services:
+
+
+# Wazuh Services
   wazuh.manager:
     image: wazuh/wazuh-manager:5.0.0
     hostname: wazuh.manager
@@ -143,6 +146,7 @@ services:
       - wazuh.indexer:wazuh.indexer
       - wazuh.manager:wazuh.manager
 
+# Shuffle Services
   frontend:
     image: ghcr.io/shuffle/shuffle-frontend:latest
     container_name: shuffle-frontend
@@ -234,6 +238,26 @@ services:
       - shuffle
     restart: unless-stopped
 
+# Velociraptor
+  velociraptor:
+    container_name: velociraptor
+    image: wlambert/velociraptor
+    volumes:
+      - ./velociraptor:/velociraptor/:rw
+    environment:
+      - VELOX_USER=${VELOX_USER}
+      - VELOX_PASSWORD=${VELOX_PASSWORD}
+      - VELOX_ROLE=${VELOX_ROLE}
+      - VELOX_SERVER_URL=${VELOX_SERVER_URL}
+      - VELOX_FRONTEND_HOSTNAME=${VELOX_FRONTEND_HOSTNAME}
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8889:8889"
+    restart: unless-stopped
+    networks:
+      - ir-infra
+
 volumes:
   wazuh_api_configuration:
   wazuh_etc:
@@ -257,5 +281,14 @@ volumes:
       o: bind
 
 networks:
-  shuffle:
-    driver: bridge
+  ir-infra:
+    ipam:
+      driver: default
+      config:
+      - subnet: "192.168.10.0/24"
+  elk:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.11.0/24"    
+  
